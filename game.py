@@ -2,7 +2,7 @@ import pygame
 import openai
 import sys
 
-openai.api_key = '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'
+openai.api_key = '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'
 
 
 def chat_with_chatgpt(user_calmness, keyword, model="gpt-3.5-turbo"):
@@ -27,7 +27,7 @@ def chat_with_chatgpt(user_calmness, keyword, model="gpt-3.5-turbo"):
 
     Based on this information, you need to generate exactly four potential commands for Alessca. These commands should be short, concise, and in the format of an instruction that Alessca can act upon.
 
-    Output your response as a Python list of exactly four short command strings. Include no other text or output. Here is the specific format: ['command 1', 'command 2', 'command 3', 'command 4'].
+    Output your response as a Python list of exactly four short command strings no more than 8 words each command. Include no other text or output. Here is the specific format: ['command 1', 'command 2', 'command 3', 'command 4'].
     """
 
     response = openai.ChatCompletion.create(
@@ -41,7 +41,6 @@ def chat_with_chatgpt(user_calmness, keyword, model="gpt-3.5-turbo"):
 
     message = response.choices[0].message['content']
 
-    # Removing square brackets and quotes, then splitting by comma
     commands = message.replace('[', '').replace(']', '').replace("'", "").split(', ')
 
     return commands
@@ -49,18 +48,21 @@ def chat_with_chatgpt(user_calmness, keyword, model="gpt-3.5-turbo"):
 
 # TODO: get actual stress level (AMIT&ARIEL!). In the meantime it is number, can be turned into a bool.
 def get_stress_level():
-    return 10
+    return 6
 
 
 class renderer():
     def __init__(self):
         pygame.init()
         self.is_first_call = True
-        self.screen_width = 800
-        self.screen_height = 600
+        # TODO: change screen's dimensions
+        self.screen_width = 1000
+        self.screen_height = 750
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+        self.screen_width = 800
+        self.screen_height = 750
         pygame.display.set_caption("Menu Example")
-        self.font = pygame.font.Font(None, 20)
+        self.font = pygame.font.Font(None, 25)
 
         self.BLACK = (0, 0, 0)
         self.RED = (255, 0, 0)
@@ -68,6 +70,7 @@ class renderer():
         self.BLUE = (0, 0, 255)
         self.YELLOW = (255, 255, 0)
         self.WHITE = (255, 255, 255)
+        self.GRAY = (128, 128, 128)
 
         stress_threshold = 50
         self.stress_level = get_stress_level()
@@ -146,7 +149,7 @@ class renderer():
                 ]
                 self.is_first_call = False
 
-        self.screen.fill(self.BLACK)
+        self.screen.fill(self.GRAY)
 
         for i, (rect, text, color) in enumerate(self.current_menu):
             pygame.draw.rect(self.screen, color, rect)
@@ -155,5 +158,17 @@ class renderer():
             text_surface = self.font.render(text, True, self.BLACK)
             text_rect = text_surface.get_rect(center=(rect[0] + rect[2] / 2, rect[1] + rect[3] / 2))
             self.screen.blit(text_surface, text_rect)
+
+        scale_rect = pygame.Rect(850, 0, 100, self.screen_height)
+        pygame.draw.rect(self.screen, ((255 * self.stress_level) / 10, (255 * (100 - self.stress_level*10)) / 100, 0), scale_rect)
+
+        arrow_height = int((self.stress_level / 10) * self.screen_height)
+        arrow_pos = (self.screen_width - 50, self.screen_height - arrow_height)
+
+        arrow_top = max(scale_rect.top, arrow_pos[1] - 15)  # Ensure the arrow stays within the scale
+        arrow_bottom = min(scale_rect.bottom, arrow_pos[1] + 15)
+
+        pygame.draw.polygon(self.screen, self.RED,
+                            [(1000, arrow_bottom), (self.screen_width, arrow_pos[1]), (1000, arrow_top)])
 
         pygame.display.flip()
